@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flashcard Quiz App</title>
+<style>
+  :root { --ink:#20243a; --muted:#68708a; --primary:#6257e8; --bg:#f4f5fb; --card:#fff; --line:#e5e7f2; }
+  * { box-sizing:border-box; }
+  body { margin:0; min-height:100vh; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:var(--ink); background:linear-gradient(135deg,#f5f3ff,#eef6ff); }
+  .app { width:min(1000px,94%); margin:0 auto; padding:30px 0 44px; }
+  header { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:28px; }
+  .brand { display:flex; align-items:center; gap:12px; }
+  .logo { display:grid; place-items:center; width:48px; height:48px; border-radius:15px; background:var(--primary); color:white; font-size:24px; box-shadow:0 8px 20px #6257e833; }
+  h1 { margin:0; font-size:clamp(1.35rem,3vw,2rem); letter-spacing:-.04em; }
+  .subtitle { margin:4px 0 0; color:var(--muted); font-size:.92rem; }
+  .count-pill { border:1px solid var(--line); background:#fff; border-radius:999px; padding:10px 14px; color:var(--muted); font-weight:650; white-space:nowrap; }
+  .layout { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(260px,.8fr); gap:22px; align-items:start; }
+  .panel { background:var(--card); border:1px solid #e8e9f3; border-radius:24px; padding:24px; box-shadow:0 14px 40px #292d5510; }
+  .section-top { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:18px; }
+  .section-top h2, .side h2 { margin:0; font-size:1.08rem; }
+  .eyebrow { color:var(--muted); text-transform:uppercase; letter-spacing:.1em; font-size:.72rem; font-weight:750; }
+  .flashcard { width:100%; min-height:300px; border:1px solid #e4e3ff; border-radius:22px; padding:28px; background:radial-gradient(circle at top right,#f0edff,transparent 45%),linear-gradient(145deg,#fff,#fafaff); display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; cursor:pointer; transition:transform .2s,border-color .2s; }
+  .flashcard:hover { transform:translateY(-2px); border-color:#b9b3ff; }
+  .card-label { color:var(--primary); text-transform:uppercase; letter-spacing:.14em; font-size:.75rem; font-weight:800; margin-bottom:18px; }
+  .card-text { font-size:clamp(1.25rem,3vw,1.85rem); line-height:1.4; font-weight:750; overflow-wrap:anywhere; }
+  .tap-hint { color:var(--muted); margin-top:24px; font-size:.85rem; }
+  .progress-row { display:flex; justify-content:space-between; color:var(--muted); font-size:.82rem; margin:18px 2px 8px; }
+  .track { height:7px; border-radius:99px; background:#ececf6; overflow:hidden; }
+  .progress { height:100%; width:0%; background:var(--primary); border-radius:99px; transition:width .25s; }
+  .actions { display:flex; gap:10px; margin-top:20px; }
+  button { border:0; border-radius:12px; padding:12px 15px; font:inherit; font-weight:700; cursor:pointer; transition:filter .15s,transform .15s; }
+  button:hover { filter:brightness(.97); } button:active { transform:scale(.98); }
+  button:focus-visible,input:focus-visible,textarea:focus-visible { outline:3px solid #b9b3ff; outline-offset:2px; }
+  .btn-primary { background:var(--primary); color:#fff; }
+  .btn-soft { background:#f0efff; color:#5146d4; }
+  .btn-outline { background:#fff; color:var(--ink); border:1px solid var(--line); }
+  .btn-danger { background:#fff0f0; color:#b42335; }
+  .actions button { flex:1; }
+  .side { display:flex; flex-direction:column; gap:18px; }
+  .side .panel { padding:21px; }
+  .side p { color:var(--muted); font-size:.9rem; line-height:1.5; margin:8px 0 16px; }
+  .full { width:100%; }
+  .stats { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px; }
+  .stat { background:#f8f8fe; border:1px solid #efeff8; padding:13px; border-radius:14px; }
+  .stat strong { display:block; font-size:1.4rem; }
+  .stat span { color:var(--muted); font-size:.78rem; }
+  .form-group { margin-top:14px; }
+  label { display:block; font-size:.84rem; font-weight:750; margin-bottom:7px; }
+  input,textarea { width:100%; border:1px solid #dfe1ee; border-radius:11px; padding:12px; font:inherit; color:var(--ink); background:#fff; }
+  textarea { resize:vertical; min-height:85px; }
+  .form-actions { display:flex; gap:8px; margin-top:14px; }
+  .form-actions button { flex:1; }
+  .empty { padding:25px 10px; text-align:center; color:var(--muted); }
+  .empty strong { display:block; color:var(--ink); margin-bottom:6px; }
+  .toast { position:fixed; left:50%; bottom:22px; transform:translateX(-50%); background:#20243a; color:white; padding:12px 18px; border-radius:12px; box-shadow:0 8px 30px #0002; display:none; max-width:90%; z-index:5; }
+  footer { text-align:center; color:#858ba1; font-size:.8rem; padding:26px 0 0; }
+  @media(max-width:760px) { .layout { grid-template-columns:1fr; } .panel { padding:18px; } .flashcard { min-height:260px; padding:22px; } header { align-items:flex-start; } .count-pill { font-size:.8rem; padding:8px 10px; } }
+  @media(max-width:420px) { .subtitle { max-width:200px; } .actions { flex-wrap:wrap; } .actions button { min-width:42%; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="logo" aria-hidden="true">▤</div>
+      <div><h1>Flashcard Quiz</h1><p class="subtitle">A simple space to learn, remember, and grow.</p></div>
+    </div>
+    <div class="count-pill" id="headerCount">5 flashcards</div>
+  </header>
+
+  <main class="layout">
+    <section class="panel" aria-label="Flashcard study area">
+      <div class="section-top">
+        <div><div class="eyebrow">Study mode</div><h2 style="margin-top:5px">Your flashcards</h2></div>
+        <button class="btn-soft" id="shuffleBtn" type="button">↻ Shuffle</button>
+      </div>
+      <div id="studyArea">
+        <button class="flashcard" id="flashcard" type="button" aria-label="Show answer">
+          <span class="card-label" id="cardLabel">Question</span>
+          <span class="card-text" id="cardText">What does HTML stand for?</span>
+          <span class="tap-hint" id="tapHint">Tap the card or choose “Show Answer”</span>
+        </button>
+        <div class="progress-row"><span id="positionText">Card 1 of 5</span><span id="progressPercent">20% complete</span></div>
+        <div class="track"><div class="progress" id="progressBar"></div></div>
+        <div class="actions">
+          <button class="btn-outline" id="prevBtn" type="button">← Previous</button>
+          <button class="btn-soft" id="showBtn" type="button">Show Answer</button>
+          <button class="btn-primary" id="nextBtn" type="button">Next →</button>
+        </div>
+        <div class="actions">
+          <button class="btn-outline" id="editCurrentBtn" type="button">✎ Edit Card</button>
+          <button class="btn-danger" id="deleteCurrentBtn" type="button">Delete Card</button>
+        </div>
+      </div>
+      <div id="emptyState" class="empty" hidden><strong>No flashcards yet</strong>Add a card using the form to start studying.</div>
+    </section>
+
+    <aside class="side">
+      <section class="panel">
+        <div class="eyebrow">Your progress</div>
+        <h2 style="margin-top:5px">Keep it going</h2>
+        <p>Move through your cards at your own pace. Practice a little every day.</p>
+        <div class="stats">
+          <div class="stat"><strong id="totalStat">5</strong><span>Total cards</span></div>
+          <div class="stat"><strong id="currentStat">1</strong><span>Current card</span></div>
+        </div>
+      </section>
+      <section class="panel" id="editorPanel">
+        <div class="section-top"><h2 id="formTitle">＋ Add a flashcard</h2></div>
+        <form id="cardForm">
+          <div class="form-group"><label for="questionInput">Question</label><textarea id="questionInput" placeholder="Type your question..." required maxlength="500"></textarea></div>
+          <div class="form-group"><label for="answerInput">Answer</label><textarea id="answerInput" placeholder="Type the answer..." required maxlength="1000"></textarea></div>
+          <div class="form-actions"><button class="btn-primary" id="saveBtn" type="submit">Add Card</button><button class="btn-outline" id="cancelBtn" type="button" hidden>Cancel</button></div>
+        </form>
+      </section>
+      <section class="panel">
+        <h2>How to use</h2>
+        <p style="margin-bottom:0">Read the question, reveal the answer, then use Next or Previous. Add your own cards or edit the sample cards to match what you're studying.</p>
+      </section>
+    </aside>
+  </main>
+  <footer>Flashcard Quiz App · Built with HTML, CSS and JavaScript</footer>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+(() => {
+  const starterCards = [
+    { question: "What does HTML stand for?", answer: "HyperText Markup Language. It structures content on web pages." },
+    { question: "What is CSS used for?", answer: "Cascading Style Sheets. CSS controls the layout, colors, fonts, and appearance of web pages." },
+    { question: "What is JavaScript?", answer: "A programming language commonly used to add interactivity and dynamic behavior to websites." },
+    { question: "What does CPU stand for?", answer: "Central Processing Unit. It executes instructions and performs calculations in a computer." },
+    { question: "What is an algorithm?", answer: "A finite sequence of clear steps used to solve a problem or complete a task." }
+  ];
+  let cards = starterCards.map(c => ({...c}));
+  let current = 0, showingAnswer = false, editingIndex = null, toastTimer;
+  const $ = id => document.getElementById(id);
+  const els = {
+    flashcard:$("flashcard"), cardLabel:$("cardLabel"), cardText:$("cardText"), tapHint:$("tapHint"),
+    positionText:$("positionText"), progressPercent:$("progressPercent"), progressBar:$("progressBar"),
+    headerCount:$("headerCount"), totalStat:$("totalStat"), currentStat:$("currentStat"),
+    studyArea:$("studyArea"), emptyState:$("emptyState"), form:$("cardForm"),
+    question:$("questionInput"), answer:$("answerInput"), formTitle:$("formTitle"),
+    saveBtn:$("saveBtn"), cancelBtn:$("cancelBtn"), toast:$("toast")
+  };
+
+  function notify(message) {
+    els.toast.textContent = message;
+    els.toast.style.display = "block";
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => els.toast.style.display = "none", 2300);
+  }
+  function render() {
+    const hasCards = cards.length > 0;
+    els.studyArea.hidden = !hasCards;
+    els.emptyState.hidden = hasCards;
+    els.headerCount.textContent = `${cards.length} flashcard${cards.length === 1 ? "" : "s"}`;
+    els.totalStat.textContent = cards.length;
+    els.currentStat.textContent = hasCards ? current + 1 : 0;
+    if (!hasCards) return;
+    current = Math.max(0, Math.min(current, cards.length - 1));
+    const card = cards[current];
+    els.cardLabel.textContent = showingAnswer ? "Answer" : "Question";
+    els.cardText.textContent = showingAnswer ? card.answer : card.question;
+    els.tapHint.textContent = showingAnswer ? "Tap to return to the question" : "Tap the card or choose “Show Answer”";
+    els.flashcard.setAttribute("aria-label", showingAnswer ? "Show question" : "Show answer");
+    els.positionText.textContent = `Card ${current + 1} of ${cards.length}`;
+    const pct = Math.round(((current + 1) / cards.length) * 100);
+    els.progressPercent.textContent = `${pct}% through deck`;
+    els.progressBar.style.width = `${pct}%`;
+    $("prevBtn").disabled = current === 0;
+    $("nextBtn").disabled = current === cards.length - 1;
+    $("prevBtn").style.opacity = current === 0 ? ".5" : "1";
+    $("nextBtn").style.opacity = current === cards.length - 1 ? ".5" : "1";
+    $("showBtn").textContent = showingAnswer ? "Show Question" : "Show Answer";
+  }
+  function resetForm() {
+    editingIndex = null;
+    els.form.reset();
+    els.formTitle.textContent = "＋ Add a flashcard";
+    els.saveBtn.textContent = "Add Card";
+    els.cancelBtn.hidden = true;
+  }
+  function startEdit(index) {
+    if (!cards.length) return notify("Add a flashcard first.");
+    editingIndex = index;
+    els.question.value = cards[index].question;
+    els.answer.value = cards[index].answer;
+    els.formTitle.textContent = "✎ Edit flashcard";
+    els.saveBtn.textContent = "Save Changes";
+    els.cancelBtn.hidden = false;
+    $("editorPanel").scrollIntoView({behavior:"smooth", block:"start"});
+    els.question.focus({preventScroll:true});
+  }
+  function toggleAnswer() { if (!cards.length) return; showingAnswer = !showingAnswer; render(); }
+  els.flashcard.addEventListener("click", toggleAnswer);
+  $("showBtn").addEventListener("click", toggleAnswer);
+  $("prevBtn").addEventListener("click", () => { if (current > 0) { current--; showingAnswer = false; render(); } });
+  $("nextBtn").addEventListener("click", () => { if (current < cards.length - 1) { current++; showingAnswer = false; render(); } });
+  $("shuffleBtn").addEventListener("click", () => {
+    if (cards.length < 2) return notify("Add at least two cards to shuffle.");
+    for (let i = cards.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [cards[i], cards[j]] = [cards[j], cards[i]];
+    }
+    current = 0; showingAnswer = false; render(); notify("Flashcards shuffled!");
+  });
+  $("editCurrentBtn").addEventListener("click", () => startEdit(current));
+  $("deleteCurrentBtn").addEventListener("click", () => {
+    if (!cards.length) return;
+    if (!window.confirm("Delete this flashcard? This action cannot be undone.")) return;
+    cards.splice(current, 1);
+    if (current >= cards.length) current = Math.max(0, cards.length - 1);
+    showingAnswer = false; resetForm(); render(); notify("Flashcard deleted.");
+  });
+  els.form.addEventListener("submit", event => {
+    event.preventDefault();
+    const question = els.question.value.trim(), answer = els.answer.value.trim();
+    if (!question || !answer) return notify("Please enter both a question and an answer.");
+    if (editingIndex !== null) {
+      cards[editingIndex] = {question, answer};
+      current = editingIndex; showingAnswer = false;
+      resetForm(); render(); notify("Flashcard updated!");
+    } else {
+      cards.push({question, answer});
+      current = cards.length - 1; showingAnswer = false;
+      resetForm(); render(); notify("Flashcard added!");
+    }
+  });
+  els.cancelBtn.addEventListener("click", resetForm);
+  render();
+})();
+</script>
+</body>
+</html>
